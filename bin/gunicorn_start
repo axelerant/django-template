@@ -1,0 +1,32 @@
+#!/bin/bash
+
+NAME="projspace_app"                                 
+DJANGODIR=/home/lakshmi/axelerant/proj/proj
+SOCKFILE=/home/lakshmi/axelerant/proj/run/gunicorn.sock 
+USER=lakshmi
+GROUP=lakshmi
+NUM_WORKERS=3                           
+DJANGO_SETTINGS_MODULE=proj.settings.test
+DJANGO_WSGI_MODULE=proj.wsgi 
+
+echo "Starting $NAME as `whoami`"
+ 
+# Activate the virtual environment
+source /home/lakshmi/python/envs/projspace/bin/activate
+cd $DJANGODIR
+export DJANGO_SETTINGS_MODULE=$DJANGO_SETTINGS_MODULE
+export PYTHONPATH=$DJANGODIR:$PYTHONPATH
+ 
+# Create the run directory if it doesn't exist
+RUNDIR=$(dirname $SOCKFILE)
+test -d $RUNDIR || mkdir -p $RUNDIR
+ 
+# Start your Django Unicorn
+# Programs meant to be run under supervisor should not daemonize themselves (do not use --daemon)
+exec /home/lakshmi/python/envs/projspace/bin/gunicorn ${DJANGO_WSGI_MODULE}:application \
+  --name $NAME \
+  --workers $NUM_WORKERS \
+  --user=$USER --group=$GROUP \
+  --bind=unix:$SOCKFILE \
+  --log-level=debug \
+  --log-file=-
